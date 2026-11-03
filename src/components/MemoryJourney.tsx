@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from "react"
-import { Pause, Play, Sparkles } from "lucide-react"
+import { Pause, Play, Sparkles, Volume2, VolumeX } from "lucide-react"
 import gsap from "gsap"
 import { MotionPathPlugin } from "gsap/MotionPathPlugin"
 import { ScrollToPlugin } from "gsap/ScrollToPlugin"
 import { birthdayConfig } from "../config/birthdayConfig"
+import { backgroundMusic } from "../utils/audio"
 import { AmbientParticles } from "./AmbientParticles"
 import { BirthdayFinale } from "./BirthdayFinale"
 import { CurvedMemoryPath } from "./CurvedMemoryPath"
@@ -24,6 +25,7 @@ interface PathPoint {
 interface JourneyGeometry {
   canvasTop: number
   canvasWidth: number
+  maxScroll: number
 }
 
 function getAnchor(memoryIndex: number, position: "left" | "right") {
@@ -54,21 +56,40 @@ function makePath() {
 
 function pathProgressAt(path: SVGPathElement, target: PathPoint) {
   const length = path.getTotalLength()
-  let closestLength = 0
-  let closestDistance = Number.POSITIVE_INFINITY
-  const samples = 900
+  let bestLength = 0
+  let bestDistance = Number.POSITIVE_INFINITY
 
-  for (let sample = 0; sample <= samples; sample += 1) {
-    const currentLength = (sample / samples) * length
-    const point = path.getPointAtLength(currentLength)
-    const distance = Math.hypot(point.x - target.x, point.y - target.y)
-    if (distance < closestDistance) {
-      closestDistance = distance
-      closestLength = currentLength
+  // Coarse sweep of 25 steps to locate the closest segment
+  const coarseStep = length / 25
+  for (let l = 0; l <= length; l += coarseStep) {
+    const pt = path.getPointAtLength(l)
+    const dist = Math.hypot(pt.x - target.x, pt.y - target.y)
+    if (dist < bestDistance) {
+      bestDistance = dist
+      bestLength = l
     }
   }
 
-  return closestLength / length
+  // Refine within the bracket using binary subdivision (12 steps = 0.05px precision)
+  let low = Math.max(0, bestLength - coarseStep)
+  let high = Math.min(length, bestLength + coarseStep)
+  for (let i = 0; i < 12; i++) {
+    const mid1 = low + (high - low) * 0.382
+    const mid2 = high - (high - low) * 0.382
+    const pt1 = path.getPointAtLength(mid1)
+    const pt2 = path.getPointAtLength(mid2)
+    const d1 = Math.hypot(pt1.x - target.x, pt1.y - target.y)
+    const d2 = Math.hypot(pt2.x - target.x, pt2.y - target.y)
+    if (d1 < d2) {
+      high = mid2
+      bestLength = mid1
+    } else {
+      low = mid1
+      bestLength = mid2
+    }
+  }
+
+  return bestLength / length
 }
 
 export function MemoryJourney() {
@@ -79,10 +100,50 @@ export function MemoryJourney() {
   const timelineRef = useRef<gsap.core.Timeline | null>(null)
   const progressRef = useRef(0)
   const autoFollowRef = useRef(true)
+  const userScrollTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const resumeFollowRef = useRef<() => void>(() => {})
   const [paused, setPaused] = useState(false)
   const [autoFollow, setAutoFollow] = useState(true)
+  const [musicPlaying, setMusicPlaying] = useState(() => backgroundMusic.getIsPlaying())
+
+  useEffect(() => {
+    return backgroundMusic.subscribe((playing) => {
+      setMusicPlaying(playing)
+    })
+  }, [])
   const path = useMemo(makePath, [])
   const { timings, memories, camera } = birthdayConfig
+
+  const resumeFollow = () => {
+    if (!canvasRef.current || !pathRef.current) return
+    if (userScrollTimerRef.current) {
+      clearTimeout(userScrollTimerRef.current)
+      userScrollTimerRef.current = null
+    }
+    autoFollowRef.current = true
+    setAutoFollow(true)
+
+    const rawPath = MotionPathPlugin.getRawPath(pathRef.current)
+    const point = MotionPathPlugin.getPositionOnPath(
+      rawPath,
+      Math.min(1, progressRef.current + camera.anticipation),
+    ) as PathPoint
+    const canvasTop =
+      canvasRef.current.getBoundingClientRect().top + window.scrollY
+    const targetY =
+      canvasTop + point.y - window.innerHeight * camera.viewportAnchor
+    const maximum =
+      document.documentElement.scrollHeight - window.innerHeight
+    const clampedTarget = gsap.utils.clamp(0, Math.max(0, maximum), targetY)
+
+    gsap.to(window, {
+      scrollTo: { y: clampedTarget, autoKill: false },
+      duration: 0.85,
+      ease: "power2.out",
+      overwrite: "auto",
+    })
+  }
+  resumeFollowRef.current = resumeFollow
 
   useEffect(() => {
     if (
@@ -107,24 +168,38 @@ export function MemoryJourney() {
     const geometry: JourneyGeometry = {
       canvasTop: 0,
       canvasWidth: 0,
+      maxScroll: 0,
     }
 
     const updateGeometry = () => {
       geometry.canvasTop = canvas.getBoundingClientRect().top + window.scrollY
       geometry.canvasWidth = canvas.clientWidth
+      geometry.maxScroll = Math.max(
+        0,
+        document.documentElement.scrollHeight - window.innerHeight,
+      )
     }
     updateGeometry()
 
-    const interruptFollow = () => {
-      if (!autoFollowRef.current) return
+    const handleUserScroll = () => {
       autoFollowRef.current = false
       setAutoFollow(false)
       gsap.killTweensOf(window)
+
+      if (userScrollTimerRef.current) {
+        clearTimeout(userScrollTimerRef.current)
+      }
+
+      if (!timelineRef.current?.paused()) {
+        userScrollTimerRef.current = setTimeout(() => {
+          resumeFollowRef.current()
+        }, 1300)
+      }
     }
 
     window.addEventListener("resize", updateGeometry)
-    window.addEventListener("wheel", interruptFollow, { passive: true })
-    window.addEventListener("touchstart", interruptFollow, { passive: true })
+    window.addEventListener("wheel", handleUserScroll, { passive: true })
+    window.addEventListener("touchstart", handleUserScroll, { passive: true })
 
     const context = gsap.context(() => {
       const cards = gsap.utils.toArray<HTMLElement>(".memory")
@@ -147,7 +222,8 @@ export function MemoryJourney() {
       const setLightTwoY = ambientLightTwo
         ? gsap.quickSetter(ambientLightTwo, "y", "px")
         : () => undefined
-      const initialCameraY = window.scrollY
+      window.scrollTo({ top: 0, behavior: "instant" })
+      const initialCameraY = 0
       let initialFollowEnd = 0.05
 
       const getPoint = (progress: number) =>
@@ -163,9 +239,7 @@ export function MemoryJourney() {
           geometry.canvasTop +
           point.y -
           window.innerHeight * camera.viewportAnchor
-        const maximum =
-          document.documentElement.scrollHeight - window.innerHeight
-        return gsap.utils.clamp(0, Math.max(0, maximum), target)
+        return gsap.utils.clamp(0, geometry.maxScroll, target)
       }
 
       const renderProgress = (progress: number, followCamera: boolean) => {
@@ -176,31 +250,35 @@ export function MemoryJourney() {
         setParticleY(point.y - 7.5)
         setPathProgress(progressLength * (1 - progress))
 
-        setTrailPositions.forEach((setters, index) => {
-          const trailPoint = getPoint(progress - (index + 1) * 0.0035)
-          setters.x(trailPoint.x * scaleX - 3)
-          setters.y(trailPoint.y - 3)
-        })
-
-        setLightOneY(progress * path.height * 0.11)
-        setLightTwoY(-progress * path.height * 0.07)
+        if (!isMobile) {
+          setTrailPositions.forEach((setters, index) => {
+            const trailPoint = getPoint(progress - (index + 1) * 0.0035)
+            setters.x(trailPoint.x * scaleX - 3)
+            setters.y(trailPoint.y - 3)
+          })
+          setLightOneY(progress * path.height * 0.11)
+          setLightTwoY(-progress * path.height * 0.07)
+        }
 
         if (followCamera && autoFollowRef.current) {
+          const target = getCameraY(progress)
           const initialBlend = gsap.utils.clamp(
             0,
             1,
             progress / initialFollowEnd,
           )
-          window.scrollTo(
-            0,
-            gsap.utils.interpolate(
-              initialCameraY,
-              getCameraY(progress),
-              initialBlend,
-            ),
+          const destY = gsap.utils.interpolate(
+            initialCameraY,
+            target,
+            initialBlend,
           )
+          if (Math.abs(window.scrollY - destY) >= 0.5) {
+            window.scrollTo({ top: destY, behavior: "instant" })
+          }
         }
       }
+
+      const isMobile = window.innerWidth <= 720
 
       gsap.set(svgPath, {
         strokeDasharray: progressLength,
@@ -209,8 +287,9 @@ export function MemoryJourney() {
       gsap.set(cards, { autoAlpha: 0 })
       cards.forEach((card) => {
         gsap.set(card.querySelector(".memory-photo-wrap"), {
-          scale: 0.87,
-          filter: "blur(8px)",
+          scale: 0.9,
+          y: 16,
+          autoAlpha: 0,
         })
       })
       gsap.set(".memory-aura", { scale: 0.55, autoAlpha: 0 })
@@ -223,9 +302,8 @@ export function MemoryJourney() {
         autoAlpha: 0,
       })
       gsap.set(".caption-word", {
-        y: 26,
+        y: 18,
         autoAlpha: 0,
-        letterSpacing: "0.08em",
       })
       gsap.set(".birthday-finale .finale-copy > *", {
         y: 35,
@@ -240,7 +318,8 @@ export function MemoryJourney() {
         gsap.set(cards, { autoAlpha: 1 })
         gsap.set(".memory-photo-wrap", {
           scale: 1,
-          filter: "blur(0px)",
+          y: 0,
+          autoAlpha: 1,
         })
         gsap.set(".memory-aura, .path-stop", {
           scale: 1,
@@ -249,7 +328,6 @@ export function MemoryJourney() {
         gsap.set(".caption-word", {
           y: 0,
           autoAlpha: 1,
-          letterSpacing: "0em",
         })
         gsap.set(svgPath, { strokeDashoffset: 0 })
         gsap.set(particle, { opacity: 0 })
@@ -272,6 +350,7 @@ export function MemoryJourney() {
       const timeline = gsap.timeline()
       timelineRef.current = timeline
       timeline.set(root, { autoAlpha: 1 })
+      timeline.to({}, { duration: 0.35 })
 
       memories.forEach((_, index) => {
         const card = cards[index]
@@ -295,7 +374,15 @@ export function MemoryJourney() {
             progress: end,
             duration: timings.particleTravelDuration,
             ease: "power1.inOut",
-            onStart: () => root.classList.add("journey--travelling"),
+            onStart: () => {
+              root.classList.add("journey--travelling")
+              if (userScrollTimerRef.current) {
+                clearTimeout(userScrollTimerRef.current)
+                userScrollTimerRef.current = null
+              }
+              autoFollowRef.current = true
+              setAutoFollow(true)
+            },
             onUpdate: () => renderProgress(journeyState.progress, true),
             onComplete: () => root.classList.remove("journey--travelling"),
           })
@@ -346,8 +433,7 @@ export function MemoryJourney() {
           .to(
             particle,
             {
-              scale: 1.75,
-              filter: "brightness(1.8)",
+              scale: 1.6,
               duration: timings.arrivalDuration * 0.45,
               yoyo: true,
               repeat: 1,
@@ -357,25 +443,25 @@ export function MemoryJourney() {
           )
           .to(photo, {
             scale: 1,
-            filter: "blur(0px)",
+            y: 0,
+            autoAlpha: 1,
             duration: timings.photoRevealDuration,
             ease: "power3.out",
           })
           .to(words, {
             y: 0,
             autoAlpha: 1,
-            letterSpacing: "0em",
             stagger: wordStagger,
-            duration: 0.7,
+            duration: 0.65,
             ease: "power3.out",
           })
           .to(
             accentWords,
             {
               color: "#f2c987",
-              textShadow: "0 0 18px rgba(233,181,111,.25)",
-              duration: 0.9,
-              stagger: 0.1,
+              textShadow: "0 0 16px rgba(233,181,111,.22)",
+              duration: 0.8,
+              stagger: 0.08,
             },
             "-=0.55",
           )
@@ -407,7 +493,15 @@ export function MemoryJourney() {
           progress: 1,
           duration: timings.finaleTravelDuration,
           ease: "power2.inOut",
-          onStart: () => root.classList.add("journey--travelling"),
+          onStart: () => {
+            root.classList.add("journey--travelling")
+            if (userScrollTimerRef.current) {
+              clearTimeout(userScrollTimerRef.current)
+              userScrollTimerRef.current = null
+            }
+            autoFollowRef.current = true
+            setAutoFollow(true)
+          },
           onUpdate: () => renderProgress(journeyState.progress, true),
           onComplete: () => root.classList.remove("journey--travelling"),
         })
@@ -449,17 +543,27 @@ export function MemoryJourney() {
         .to(
           cameraState,
           {
-            y: () =>
-              finale
-                ? finale.getBoundingClientRect().top + window.scrollY
-                : geometry.canvasTop + path.height,
+            y: () => {
+              if (finale) {
+                const finaleTop =
+                  finale.getBoundingClientRect().top + window.scrollY
+                return Math.max(0, finaleTop - window.innerHeight * 0.12)
+              }
+              const canvasTop =
+                canvas.getBoundingClientRect().top + window.scrollY
+              return canvasTop + path.height
+            },
             duration: timings.finaleRevealDuration,
             ease: "power2.inOut",
             onStart: () => {
-              cameraState.y = getCameraY(1)
+              cameraState.y = window.scrollY
+              autoFollowRef.current = true
+              setAutoFollow(true)
             },
             onUpdate: () => {
-              if (autoFollowRef.current) window.scrollTo(0, cameraState.y)
+              if (autoFollowRef.current) {
+                window.scrollTo({ top: cameraState.y, behavior: "instant" })
+              }
             },
           },
           "<",
@@ -497,9 +601,13 @@ export function MemoryJourney() {
     }, root)
 
     return () => {
+      if (userScrollTimerRef.current) {
+        clearTimeout(userScrollTimerRef.current)
+        userScrollTimerRef.current = null
+      }
       window.removeEventListener("resize", updateGeometry)
-      window.removeEventListener("wheel", interruptFollow)
-      window.removeEventListener("touchstart", interruptFollow)
+      window.removeEventListener("wheel", handleUserScroll)
+      window.removeEventListener("touchstart", handleUserScroll)
       document.documentElement.style.scrollBehavior = originalScrollBehavior
       timelineRef.current = null
       gsap.killTweensOf(window)
@@ -514,28 +622,9 @@ export function MemoryJourney() {
     timeline.paused(nextPaused)
     rootRef.current?.classList.toggle("journey--paused", nextPaused)
     setPaused(nextPaused)
-  }
-
-  const resumeFollow = () => {
-    if (!canvasRef.current || !pathRef.current) return
-    autoFollowRef.current = true
-    setAutoFollow(true)
-
-    const rawPath = MotionPathPlugin.getRawPath(pathRef.current)
-    const point = MotionPathPlugin.getPositionOnPath(
-      rawPath,
-      Math.min(1, progressRef.current + camera.anticipation),
-    ) as PathPoint
-    const canvasTop =
-      canvasRef.current.getBoundingClientRect().top + window.scrollY
-    const targetY =
-      canvasTop + point.y - window.innerHeight * camera.viewportAnchor
-    gsap.to(window, {
-      scrollTo: { y: Math.max(0, targetY) },
-      duration: 1.1,
-      ease: "power2.inOut",
-      overwrite: true,
-    })
+    if (!nextPaused) {
+      resumeFollow()
+    }
   }
 
   return (
@@ -557,6 +646,18 @@ export function MemoryJourney() {
             Follow journey
           </button>
         )}
+        <button
+          onClick={() => backgroundMusic.toggle()}
+          className={`music-button ${musicPlaying ? "music-button--active" : ""}`}
+          aria-label={musicPlaying ? "Mute music" : "Play music"}
+        >
+          {musicPlaying ? (
+            <Volume2 size={15} strokeWidth={1.8} />
+          ) : (
+            <VolumeX size={15} strokeWidth={1.8} />
+          )}
+          <span>{musicPlaying ? "Music" : "Muted"}</span>
+        </button>
         <button
           onClick={togglePause}
           className="pause-button"

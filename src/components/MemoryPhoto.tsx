@@ -11,14 +11,22 @@ export function MemoryPhoto({
 }) {
   const words = memory.message.split(" ")
   const highlightedWords = new Set([
-    "journey.",
+    "journey",
     "moments",
     "memories",
     "laugh",
     "glad",
-    "together.",
+    "together",
     "best",
-    "yet.",
+    "yet",
+    "brother",
+    "adventure",
+    "rare",
+    "smiles",
+    "stronger",
+    "stories",
+    "chaotic",
+    "unforgettable",
   ])
 
   return (
@@ -35,6 +43,9 @@ export function MemoryPhoto({
           <img
             src={memory.image}
             alt={memory.imageAlt}
+            style={{
+              objectPosition: memory.objectPosition || "center 20%",
+            }}
             loading={index > 1 ? "lazy" : "eager"}
             decoding="async"
           />
@@ -46,18 +57,21 @@ export function MemoryPhoto({
       </div>
       <div className="memory-caption">
         <p>
-          {words.map((word, wordIndex) => (
-            <span
-              className={`caption-word ${
-                highlightedWords.has(word.toLowerCase())
-                  ? "caption-word--accent"
-                  : ""
-              }`}
-              key={`${word}-${wordIndex}`}
-            >
-              {word}{" "}
-            </span>
-          ))}
+          {words.map((word, wordIndex) => {
+            const cleanWord = word.toLowerCase().replace(/[^a-z]/g, "")
+            return (
+              <span
+                className={`caption-word ${
+                  highlightedWords.has(cleanWord)
+                    ? "caption-word--accent"
+                    : ""
+                }`}
+                key={`${word}-${wordIndex}`}
+              >
+                {word}{" "}
+              </span>
+            )
+          })}
         </p>
       </div>
     </article>

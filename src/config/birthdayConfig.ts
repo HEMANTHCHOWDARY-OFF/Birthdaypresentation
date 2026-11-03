@@ -7,6 +7,7 @@ export interface Memory {
   date: string
   message: string
   position: MemoryPosition
+  objectPosition?: string
 }
 
 export const birthdayConfig = {
@@ -17,9 +18,9 @@ export const birthdayConfig = {
   },
   intro: {
     eyebrow: "A small story about us",
-    title: "Some memories deserve their own journey.",
-    subtitle: "And this one is for you.",
-    buttonLabel: "Let's begin",
+    title: " Vishwambhara presents.",
+    subtitle: "this one is for you.",
+    buttonLabel: "Get started",
   },
   timings: {
     particleTravelDuration: 2.5,
@@ -38,46 +39,87 @@ export const birthdayConfig = {
   memories: [
     {
       id: 1,
-      image: "/images/memory-1.jpg",
-      imageAlt: "Friends laughing together outside",
+      image: "/images/photo1.jpeg",
+      imageAlt: "Memory 1",
       date: "Chapter one",
-      message: "The beginning of our wonderfully chaotic journey.",
+      message: "Chaitu with letha letha meesalu ( pilla baccha )",
       position: "left",
+      objectPosition: "center 35%",
     },
     {
       id: 2,
-      image: "/images/memory-2.jpg",
-      imageAlt: "Friends sitting together in the glow of sunset",
+      image: "/images/photo2.jpeg",
+      imageAlt: "Memory 2",
       date: "Golden days",
-      message: "Some afternoons quietly become the moments we never forget.",
+      message: " Chaitu with asif ( Ok le ra mi iddhare friends le 👍)",
       position: "right",
+      objectPosition: "center 40%",
     },
     {
       id: 3,
-      image: "/images/memory-3.jpg",
-      imageAlt: "A group of friends sharing a candid moment",
+      image: "/images/photo3.jpeg",
+      imageAlt: "Memory 3",
       date: "The loud years",
       message:
-        "The memories that still make me laugh before I finish the story.",
+        "# Kadiri model with dio ( bgm : bahubali )",
       position: "left",
+      objectPosition: "center 25%",
     },
     {
       id: 4,
-      image: "/images/memory-4.jpg",
-      imageAlt: "Two friends smiling together",
-      date: "Still here",
-      message:
-        "Through every detour and all the chaos, I am glad we stayed together.",
+      image: "/images/photo4.jpeg",
+      imageAlt: "Memory 4",
+      date: "Pure unfiltered",
+      message: " Chaitu with his best friend ( handsome boy ) ",
       position: "right",
+      objectPosition: "center 22%",
     },
     {
       id: 5,
-      image: "/images/memory-5.jpg",
-      imageAlt: "Two close friends sharing a quiet portrait",
+      image: "/images/photo5.jpeg",
+      imageAlt: "Memory 5",
+      date: "Through every storm",
+      message:
+        "Chaitu at YUVA innovation ❤️",
+      position: "left",
+      objectPosition: "center 15%",
+    },
+    {
+      id: 6,
+      image: "/images/photo6.jpeg",
+      imageAlt: "Memory 6",
+      date: "A rare brother",
+      message: "Chaitu enjoying nature ( ALLU-VERA )",
+      position: "right",
+      objectPosition: "center top",
+    },
+    {
+      id: 7,
+      image: "/images/photo7.jpeg",
+      imageAlt: "Memory 7",
+      date: "Good times",
+      message: "Chaitu in mirror selfie",
+      position: "left",
+      objectPosition: "center 8%",
+    },
+    {
+      id: 8,
+      image: "/images/photo8.jpeg",
+      imageAlt: "Memory 8",
+      date: "Still here",
+      message: " Chaitu with chain and shades",
+      position: "right",
+      objectPosition: "center 18%",
+    },
+    {
+      id: 9,
+      image: "/images/photo9.jpeg",
+      imageAlt: "Memory 9",
       date: "To be continued",
       message:
-        "The best part is knowing our favorite memories have not happened yet.",
+        "ABBA ! em undhi #######    nuvvu na gundekai rahh  ",
       position: "left",
+      objectPosition: "center 18%",
     },
   ] satisfies Memory[],
   finalMessage: {

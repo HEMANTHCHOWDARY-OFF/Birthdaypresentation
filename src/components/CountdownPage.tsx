@@ -149,6 +149,15 @@ export function CountdownPage() {
 
   return (
     <section ref={pageRef} className="countdown-page">
+      <div className="countdown-bg" aria-hidden="true">
+        <img
+          src="/images/main-photo.jpeg"
+          alt=""
+          className="countdown-bg-image"
+          loading="eager"
+        />
+        <div className="countdown-bg-overlay" />
+      </div>
       <AmbientParticles />
       <div className="countdown-aurora countdown-aurora--one" />
       <div className="countdown-aurora countdown-aurora--two" />
@@ -160,10 +169,10 @@ export function CountdownPage() {
             strokeWidth={1.3}
             aria-hidden="true"
           />
-          <p className="eyebrow">The wait is part of the story</p>
-          <h1>Something Special Is Coming...</h1>
+          <p className="eyebrow">Thokkudu billa </p>
+          <h1>Wait chey ra unga </h1>
           <p className="countdown-subtitle">
-            A little surprise is waiting for you.
+           welcome to debba debba presentations
           </p>
         </div>
 
@@ -181,7 +190,7 @@ export function CountdownPage() {
         </div>
 
         <p className="countdown-note">
-          Every second brings you closer to a special surprise. ❤️
+          Every second brings you closer to a special surprise.  ❤️
         </p>
       </div>
 
