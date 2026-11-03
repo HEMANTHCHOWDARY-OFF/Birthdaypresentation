@@ -1,0 +1,10 @@
+{
+  "description": "Share a cinematic birthday journey through friendship photos and personal messages, creating a heartfelt, interactive surprise for someone special.",
+  "robots": {
+    "index": false
+  },
+  "accessibility": {
+    "addBypassLinks": false,
+    "ignoreReducedMotion": false
+  }
+}
