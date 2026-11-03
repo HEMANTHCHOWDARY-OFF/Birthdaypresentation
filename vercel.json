@@ -4,9 +4,8 @@
   "outputDirectory": "dist",
   "rewrites": [
     {
-      "source": "/(.*)",
+      "source": "/((?!assets/|images/|audio/|.*\\..*).*)",
       "destination": "/index.html"
     }
   ]
 }
-
