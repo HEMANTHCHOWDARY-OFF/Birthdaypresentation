@@ -4,7 +4,7 @@
   "outputDirectory": "dist",
   "rewrites": [
     {
-      "source": "/((?!assets/|images/|audio/|.*\\..*).*)",
+      "source": "/((?!assets/|photos/|music/|images/|audio/|.*\\..*).*)",
       "destination": "/index.html"
     }
   ]

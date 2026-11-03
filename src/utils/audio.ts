@@ -10,7 +10,7 @@ class BackgroundAudioManager {
 
   private getAudioInstance(): HTMLAudioElement {
     if (!this.audio) {
-      const audio = new Audio('/audio/bg-music.mp3')
+      const audio = new Audio('/music/bg-music.mp3')
       audio.loop = true
       audio.preload = 'auto'
 

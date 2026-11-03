@@ -39,7 +39,7 @@ export const birthdayConfig = {
   memories: [
     {
       id: 1,
-      image: "/images/photo1.jpeg",
+      image: "/photos/photo1.jpeg",
       imageAlt: "Memory 1",
       date: "Chapter one",
       message: "Chaitu with letha letha meesalu ( pilla baccha )",
@@ -48,7 +48,7 @@ export const birthdayConfig = {
     },
     {
       id: 2,
-      image: "/images/photo2.jpeg",
+      image: "/photos/photo2.jpeg",
       imageAlt: "Memory 2",
       date: "Golden days",
       message: " Chaitu with asif ( Ok le ra mi iddhare friends le 👍)",
@@ -57,7 +57,7 @@ export const birthdayConfig = {
     },
     {
       id: 3,
-      image: "/images/photo3.jpeg",
+      image: "/photos/photo3.jpeg",
       imageAlt: "Memory 3",
       date: "The loud years",
       message:
@@ -67,7 +67,7 @@ export const birthdayConfig = {
     },
     {
       id: 4,
-      image: "/images/photo4.jpeg",
+      image: "/photos/photo4.jpeg",
       imageAlt: "Memory 4",
       date: "Pure unfiltered",
       message: " Chaitu with his best friend ( handsome boy ) ",
@@ -76,7 +76,7 @@ export const birthdayConfig = {
     },
     {
       id: 5,
-      image: "/images/photo5.jpeg",
+      image: "/photos/photo5.jpeg",
       imageAlt: "Memory 5",
       date: "Through every storm",
       message:
@@ -86,7 +86,7 @@ export const birthdayConfig = {
     },
     {
       id: 6,
-      image: "/images/photo6.jpeg",
+      image: "/photos/photo6.jpeg",
       imageAlt: "Memory 6",
       date: "A rare brother",
       message: "Chaitu enjoying nature ( ALLU-VERA )",
@@ -95,7 +95,7 @@ export const birthdayConfig = {
     },
     {
       id: 7,
-      image: "/images/photo7.jpeg",
+      image: "/photos/photo7.jpeg",
       imageAlt: "Memory 7",
       date: "Good times",
       message: "Chaitu in mirror selfie",
@@ -104,7 +104,7 @@ export const birthdayConfig = {
     },
     {
       id: 8,
-      image: "/images/photo8.jpeg",
+      image: "/photos/photo8.jpeg",
       imageAlt: "Memory 8",
       date: "Still here",
       message: " Chaitu with chain and shades",
@@ -113,7 +113,7 @@ export const birthdayConfig = {
     },
     {
       id: 9,
-      image: "/images/photo9.jpeg",
+      image: "/photos/photo9.jpeg",
       imageAlt: "Memory 9",
       date: "To be continued",
       message:
