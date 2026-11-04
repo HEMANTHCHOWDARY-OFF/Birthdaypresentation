@@ -34,7 +34,7 @@ export function LandingPage({ onBegin }: { onBegin: () => void }) {
     <section ref={pageRef} className="landing-page">
       <div className="landing-bg" aria-hidden="true">
         <img
-          src="/photos/landing-bg.jpg"
+          src="/landing-bg.jpg"
           alt=""
           className="landing-bg-image"
           loading="eager"
