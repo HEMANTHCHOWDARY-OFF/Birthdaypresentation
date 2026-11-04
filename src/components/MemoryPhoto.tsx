@@ -46,7 +46,7 @@ export function MemoryPhoto({
             style={{
               objectPosition: memory.objectPosition || "center 20%",
             }}
-            loading={index > 1 ? "lazy" : "eager"}
+            loading="eager"
             decoding="async"
           />
         </div>

@@ -49,7 +49,10 @@ function ExperienceGate() {
   if (!hasPreviewAccess() && isCountdownActive()) {
     return <Navigate to="/" replace />
   }
-
+  // If the countdown has finished, go straight to the memory journey (home page)
+  if (!isCountdownActive()) {
+    return <MemoryJourney />
+  }
   return <ExperiencePage />
 }
 
