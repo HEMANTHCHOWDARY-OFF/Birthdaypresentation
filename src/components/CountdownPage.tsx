@@ -151,7 +151,7 @@ export function CountdownPage() {
     <section ref={pageRef} className="countdown-page">
       <div className="countdown-bg" aria-hidden="true">
         <img
-          src="/main-photo.jpeg"
+          src="/images/main-photo.jpeg"
           alt=""
           className="countdown-bg-image"
           loading="eager"
