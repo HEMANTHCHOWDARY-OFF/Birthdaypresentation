@@ -111,6 +111,15 @@ export function MemoryJourney() {
       setMusicPlaying(playing)
     })
   }, [])
+
+  // Auto-start music when the journey mounts (handles post-countdown and /preview routes).
+  // Browser autoplay policy means this may silently fail until the user clicks — the
+  // registerAutoplayRetry fallback in audio.ts will catch that and retry on the next click.
+  useEffect(() => {
+    if (!backgroundMusic.getIsPlaying()) {
+      backgroundMusic.playFromStart()
+    }
+  }, [])
   const path = useMemo(makePath, [])
   const { timings, memories, camera } = birthdayConfig
 
