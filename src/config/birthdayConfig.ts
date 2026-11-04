@@ -14,7 +14,7 @@ export const birthdayConfig = {
   friendName: "My Favorite Human",
   countdown: {
     enabled: true,
-    targetDate: "2026-11-04T00:00:00+05:30",
+    targetDate: "2026-11-04T09:00:00+05:30",
   },
   intro: {
     eyebrow: "A small story about us",
